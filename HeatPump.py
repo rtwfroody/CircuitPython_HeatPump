@@ -78,8 +78,10 @@ class SettingInformationPacket(Packet):
 
 		if packet[16] != 0:
 			self.temperature_c = (packet[16] - 128) / 2
+			self.tempMode = True
 		else:
 			self.temperature_c = self.TEMP_MAP[packet[10]]
+			self.tempMode = False
 
 		self.fan = packet[11]
 		self.vane = packet[12]
@@ -211,9 +213,13 @@ class InfoRequestPacket(Packet):
 		return f"InfoRequestPacket({self.infoMode})"
 
 class StatusPacket(Packet):
-	def __init__(self, packet):
-		self.compressorFrequency = packet[8]
-		self.operating = packet[9]
+	def __init__(self, packet=None):
+		if packet:
+			self.compressorFrequency = packet[8]
+			self.operating = packet[9]
+		else:
+			self.compressorFrequency = 0
+			self.operating = 0
 
 	def __str__(self):
 		return (
@@ -276,6 +282,8 @@ class HeatPump:
 		# Last SettingInformationPacket received from the heatpump.
 		self.last_information = None
 
+		self.status = StatusPacket()
+
 	def set_power(self, value : bool):
 		self.power = value
 
@@ -330,6 +338,9 @@ class HeatPump:
 			decoded_packet = self.decode_packet(packet)
 			if isinstance(decoded_packet, SettingInformationPacket):
 				self.last_information = decoded_packet
+				self.tempMode = decoded_packet.tempMode
+			elif isinstance(decoded_packet, StatusPacket):
+				self.status = packet
 			self.debug("received:", decoded_packet)
 			return
 
