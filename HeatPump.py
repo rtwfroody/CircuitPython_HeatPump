@@ -340,7 +340,7 @@ class HeatPump:
 				self.last_information = decoded_packet
 				self.tempMode = decoded_packet.tempMode
 			elif isinstance(decoded_packet, StatusPacket):
-				self.status = packet
+				self.status = decoded_packet
 			self.debug("received:", decoded_packet)
 			return
 
